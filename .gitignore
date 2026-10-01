@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+*.log
+__pycache__/
+.DS_Store
+# n8n exports must have credentials stripped before commit
+credentials*.json
