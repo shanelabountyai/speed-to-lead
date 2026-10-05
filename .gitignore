@@ -6,3 +6,6 @@ __pycache__/
 .DS_Store
 # n8n exports must have credentials stripped before commit
 credentials*.json
+
+# HubSpot config file
+hubspot.config.yml

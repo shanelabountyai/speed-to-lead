@@ -1,0 +1,99 @@
+{
+  "id": "n1InitHeaders001",
+  "name": "Setup: write sheet headers (idempotent)",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Run once",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1tf-R3Nx1leSg4i4rBwCq8XzItWzUk-qID06-js_AOcY/values/runs!A1?valueInputOption=RAW",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"values\": [[\"time\", \"source\", \"source_id\", \"outcome\", \"time_to_draft_s\", \"cost_usd\", \"error\"]]}"
+      },
+      "name": "Headers: runs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "McOy4auCNkFX0Os2",
+          "name": "Google Sheets account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1tf-R3Nx1leSg4i4rBwCq8XzItWzUk-qID06-js_AOcY/values/review!A1?valueInputOption=RAW",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"values\": [[\"time\", \"source\", \"source_id\", \"from\", \"subject\", \"reason\", \"raw_output\"]]}"
+      },
+      "name": "Headers: review",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "McOy4auCNkFX0Os2",
+          "name": "Google Sheets account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "Headers: runs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Headers: runs": {
+      "main": [
+        [
+          {
+            "node": "Headers: review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

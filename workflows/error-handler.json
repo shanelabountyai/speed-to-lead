@@ -1,0 +1,116 @@
+{
+  "id": "n1ErrorHandler01",
+  "name": "Spine: error handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ponytail: one alert per 15 min via static data, so an outage cannot mail every minute. Per-source throttling if that proves too coarse.\nconst s = $getWorkflowStaticData('global');\nconst now = Date.now();\nif (s.lastAlert && now - s.lastAlert < 15 * 60 * 1000) return [];\ns.lastAlert = now;\nconst e = $json;\nreturn [{ json: {\n  source: e.workflow?.name ?? 'unknown',\n  source_id: 'execution ' + (e.execution?.id ?? '?'),\n  outcome: 'error',\n  time_to_draft_s: '', cost_usd: 0,\n  error: (e.execution?.lastNodeExecuted ?? '?') + ': ' + (e.execution?.error?.message ?? 'unknown'),\n  subject: 'n8n alert: ' + (e.workflow?.name ?? 'workflow') + ' failed at ' + (e.execution?.lastNodeExecuted ?? '?'),\n}}];"
+      },
+      "name": "Throttle and shape",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "__ALERT_TO__",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "=Run: {{ $json.source }}\nStep and error: {{ $json.error }}\nInput: {{ $json.source_id }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "name": "Alert owner",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GGGxY4DRdE9giH2x",
+          "name": "Gmail account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "n1RunLogWriter01",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "name": "Log the failure",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        0
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Throttle and shape",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Throttle and shape": {
+      "main": [
+        [
+          {
+            "node": "Alert owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert owner": {
+      "main": [
+        [
+          {
+            "node": "Log the failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
