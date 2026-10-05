@@ -9,8 +9,12 @@ Status: PRD drafted and fixtures written (2026-10-01). No workflow built yet.
 
 Decided 2026-10-01: a real lead carrying an injected instruction gets a contact (scored and routed from what it honestly states), no draft, and a review row.
 
-Open before Phase 1:
-- n8n version, and whether it has an Anthropic node or model calls go through an HTTP request.
+Phase 1 setup done 2026-10-05:
+- `npx n8n@2.27.5` FAILS on Node 26 (`isolated-vm` native build; n8n needs Node >=22.22 and <26). Run it under a local Node 22 instead: n8n is installed in `~/.n8n-runtime` (`node@22` + `n8n@2.27.5`). Start: `PATH=$HOME/.n8n-runtime/node_modules/.bin:$PATH n8n start`, editor at http://localhost:5678.
+- Confirmed in 2.27.5: Gmail Trigger (labelIds filter), HubSpot + HubSpot Trigger, Google Sheets, Anthropic nodes all present.
+- `~/.n8n` was last used by n8n 2.41.5, so launching 2.27.5 recorded a downgrade. It held 0 workflows. Backup: `~/.n8n-backup-2026-10-05`. If anything misbehaves, set `N8N_USER_FOLDER` to a clean per-project folder.
+
+Next: build the spine as sub-workflows (error handler, run-log writer), then the Gmail + HubSpot poll triggers with dedupe on the source id. Needs credentials from Shane first: Gmail OAuth, Google Sheets OAuth (run-log sheet), HubSpot token.
 
 Open before Phase 2:
 - Which Claude model for extract and for draft.
