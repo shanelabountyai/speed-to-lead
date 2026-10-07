@@ -14,13 +14,46 @@
     },
     {
       "parameters": {
-        "jsCode": "// ponytail: one alert per 15 min via static data, so an outage cannot mail every minute. Per-source throttling if that proves too coarse.\nconst s = $getWorkflowStaticData('global');\nconst now = Date.now();\nif (s.lastAlert && now - s.lastAlert < 15 * 60 * 1000) return [];\ns.lastAlert = now;\nconst e = $json;\nreturn [{ json: {\n  source: e.workflow?.name ?? 'unknown',\n  source_id: 'execution ' + (e.execution?.id ?? '?'),\n  outcome: 'error',\n  time_to_draft_s: '', cost_usd: 0,\n  error: (e.execution?.lastNodeExecuted ?? '?') + ': ' + (e.execution?.error?.message ?? 'unknown'),\n  subject: 'n8n alert: ' + (e.workflow?.name ?? 'workflow') + ' failed at ' + (e.execution?.lastNodeExecuted ?? '?'),\n}}];"
+        "jsCode": "// ponytail: one alert EMAIL per 15 min via static data, so an outage cannot mail every minute; every failure is still logged. Per-source throttling if that proves too coarse.\nconst s = $getWorkflowStaticData('global');\nconst now = Date.now();\nconst send = !(s.lastAlert && now - s.lastAlert < 15 * 60 * 1000);\nif (send) s.lastAlert = now;\nconst e = $json;\nreturn [{ json: {\n  send,\n  source: e.workflow?.name ?? 'unknown',\n  source_id: 'execution ' + (e.execution?.id ?? '?'),\n  outcome: 'error',\n  time_to_draft_s: '', cost_usd: 0,\n  error: (e.execution?.lastNodeExecuted ?? '?') + ': ' + (e.execution?.error?.message ?? 'unknown'),\n  subject: 'n8n alert: ' + (e.workflow?.name ?? 'workflow') + ' failed at ' + (e.execution?.lastNodeExecuted ?? '?'),\n}}];"
       },
-      "name": "Throttle and shape",
+      "name": "Shape and throttle",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.send }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Send alert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
         0
       ]
     },
@@ -40,8 +73,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.2,
       "position": [
-        480,
-        0
+        720,
+        -80
       ],
       "credentials": {
         "gmailOAuth2": {
@@ -49,9 +82,59 @@
           "name": "Gmail account"
         }
       },
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a0",
+              "name": "source",
+              "value": "={{ $('Shape and throttle').item.json.source }}",
+              "type": "string"
+            },
+            {
+              "id": "a1",
+              "name": "source_id",
+              "value": "={{ $('Shape and throttle').item.json.source_id }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "outcome",
+              "value": "={{ $('Shape and throttle').item.json.outcome }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "time_to_draft_s",
+              "value": "={{ $('Shape and throttle').item.json.time_to_draft_s }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "cost_usd",
+              "value": "={{ $('Shape and throttle').item.json.cost_usd }}",
+              "type": "number"
+            },
+            {
+              "id": "a5",
+              "name": "error",
+              "value": "={{ $('Shape and throttle').item.json.error }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Error row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        0
+      ]
     },
     {
       "parameters": {
@@ -67,7 +150,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        720,
+        1200,
         0
       ],
       "onError": "continueRegularOutput"
@@ -78,14 +161,25 @@
       "main": [
         [
           {
-            "node": "Throttle and shape",
+            "node": "Shape and throttle",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Throttle and shape": {
+    "Shape and throttle": {
+      "main": [
+        [
+          {
+            "node": "Send alert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send alert?": {
       "main": [
         [
           {
@@ -93,10 +187,28 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Error row",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Alert owner": {
+      "main": [
+        [
+          {
+            "node": "Error row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error row": {
       "main": [
         [
           {
