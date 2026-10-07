@@ -16,7 +16,7 @@
     },
     {
       "parameters": {
-        "operation": "append",
+        "operation": "appendOrUpdate",
         "documentId": {
           "__rl": true,
           "value": "1tf-R3Nx1leSg4i4rBwCq8XzItWzUk-qID06-js_AOcY",
@@ -38,7 +38,9 @@
             "cost_usd": "={{ $json.cost_usd }}",
             "error": "={{ $json.error }}"
           },
-          "matchingColumns": [],
+          "matchingColumns": [
+            "source_id"
+          ],
           "schema": [
             {
               "id": "time",
@@ -107,7 +109,7 @@
         },
         "options": {}
       },
-      "name": "Append run",
+      "name": "Upsert run",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
@@ -130,7 +132,7 @@
       "main": [
         [
           {
-            "node": "Append run",
+            "node": "Upsert run",
             "type": "main",
             "index": 0
           }

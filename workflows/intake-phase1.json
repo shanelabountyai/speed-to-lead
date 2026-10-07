@@ -39,9 +39,7 @@
         "limit": 50,
         "simple": false,
         "filters": {
-          "labelIds": [
-            "Label_2"
-          ]
+          "q": "label:n1-lead"
         },
         "options": {}
       },
