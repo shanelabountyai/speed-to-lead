@@ -30,6 +30,12 @@ Built 2026-10-05 (in `workflows/`, import with `ALERT_TO=<addr> scripts/import.s
 - Known gap: the error alert cannot name the lead's source id (the Error Trigger does not carry it). Phase 2 fix: process each message in its own sub-workflow with an error output.
 - Concession: Gmail OAuth grants send scope, so "the workflow holds no send permission" is true by design (only the alert email sends), not by credential scope.
 
+Phase 2 started 2026-10-19:
+- Rules are data: `rules/*.json` (score_rules, bands, routing, rates, config) is the source of truth, copied to sheet tabs of the same names by `workflows/dev-rule-tabs.json` (written; `runs` header widened to 13 cols incl. score, band, segment, demo_owner, tokens). `lib/scoring.js` is the pure score/band/route logic; `node --test test/scoring.test.js` checks all fixtures that reach routing against `expected` (passes; breaking a rule fails it). Round-robin position comes from counts of already-routed leads in the run log.
+- HubSpot: custom contact properties created (demo_record, demo_owner, lead_score, lead_band, lead_segment, lead_score_reasons) and 8 synthetic contacts upserted (Dana Whitfield ... from F01-F06, F21, F22; `first.last@example.com`, `message` = fixture body, `demo_record`=true) via `workflows/dev-seed-hubspot.json`; `dev-teardown-hubspot.json` archives every demo_record contact. Generator: `scripts/gen_dev.py`.
+- Extraction model default: claude-haiku-4-5-20251001 (config tab `extract_model`); the eval decides. Needs an `Anthropic account` credential in n8n (Shane to create).
+- Design: a per-lead `process lead` sub-workflow (input: source, source_id, from_email, subject, body) called by both intakes and, in Phase 4, by the fixture eval, so no live inbox is needed.
+
 Open before Phase 2:
 - Which Claude model for extract and for draft.
 - Confirm eval thresholds (40 fixtures, 90% fields, 95% lead detection).

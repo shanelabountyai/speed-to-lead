@@ -1,0 +1,310 @@
+{
+  "id": "n1DevSeedHubspot1",
+  "name": "Dev: seed HubSpot properties and synthetic contacts",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Run once",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/properties/contacts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"name\": \"demo_record\", \"label\": \"Demo record\", \"type\": \"bool\", \"fieldType\": \"booleancheckbox\", \"groupName\": \"contactinformation\", \"options\": [{\"label\": \"Yes\", \"value\": \"true\", \"displayOrder\": 0}, {\"label\": \"No\", \"value\": \"false\", \"displayOrder\": 1}]}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Property demo_record",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "u1WBi64R7zas6Zfn",
+          "name": "HubSpot Service Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/properties/contacts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"name\": \"demo_owner\", \"label\": \"Demo owner\", \"type\": \"string\", \"fieldType\": \"text\", \"groupName\": \"contactinformation\"}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Property demo_owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "u1WBi64R7zas6Zfn",
+          "name": "HubSpot Service Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/properties/contacts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"name\": \"lead_score\", \"label\": \"Lead score\", \"type\": \"number\", \"fieldType\": \"number\", \"groupName\": \"contactinformation\"}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Property lead_score",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "u1WBi64R7zas6Zfn",
+          "name": "HubSpot Service Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/properties/contacts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"name\": \"lead_band\", \"label\": \"Lead band\", \"type\": \"string\", \"fieldType\": \"text\", \"groupName\": \"contactinformation\"}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Property lead_band",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "u1WBi64R7zas6Zfn",
+          "name": "HubSpot Service Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/properties/contacts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"name\": \"lead_segment\", \"label\": \"Lead segment\", \"type\": \"string\", \"fieldType\": \"text\", \"groupName\": \"contactinformation\"}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Property lead_segment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "u1WBi64R7zas6Zfn",
+          "name": "HubSpot Service Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/properties/contacts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"name\": \"lead_score_reasons\", \"label\": \"Lead score reasons\", \"type\": \"string\", \"fieldType\": \"textarea\", \"groupName\": \"contactinformation\"}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Property lead_score_reasons",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "u1WBi64R7zas6Zfn",
+          "name": "HubSpot Service Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"inputs\": [{\"id\": \"dana.whitfield@example.com\", \"idProperty\": \"email\", \"properties\": {\"email\": \"dana.whitfield@example.com\", \"firstname\": \"Dana\", \"lastname\": \"Whitfield\", \"company\": \"Northwind Logistics\", \"message\": \"Hi,\\n\\nI run marketing ops at Northwind Logistics (about 220 people). Our HubSpot has years of duplicate contacts and half the lifecycle stages are wrong. We need it cleaned up before a campaign that starts in three weeks.\\n\\nWe have $15-20k set aside for this. Can we talk this week?\\n\\nDana Whitfield\\nDirector of Marketing Operations\", \"demo_record\": \"true\"}}, {\"id\": \"marcus.lee@example.com\", \"idProperty\": \"email\", \"properties\": {\"email\": \"marcus.lee@example.com\", \"firstname\": \"Marcus\", \"lastname\": \"Lee\", \"company\": \"Pinecrest Dental Group\", \"message\": \"Hello,\\n\\nPinecrest Dental Group has 85 staff across six offices. We bought HubSpot in the spring and have not built a single workflow. We would like appointment-reminder and new-patient nurture sequences set up sometime this quarter.\\n\\nThanks,\\nMarcus Lee, Operations Manager\", \"demo_record\": \"true\"}}, {\"id\": \"priya.raman@example.com\", \"idProperty\": \"email\", \"properties\": {\"email\": \"priya.raman@example.com\", \"firstname\": \"Priya\", \"lastname\": \"Raman\", \"company\": \"Alder & Finch Architects\", \"message\": \"Hi there. I'm a partner at Alder & Finch Architects, 32 people. The partners want one dashboard showing proposals out, win rate, and revenue by project type, all from HubSpot. We'd like it live before our board meeting on the 24th and have budgeted around $6,000.\\n\\nPriya Raman\", \"demo_record\": \"true\"}}, {\"id\": \"tom.okafor@example.com\", \"idProperty\": \"email\", \"properties\": {\"email\": \"tom.okafor@example.com\", \"firstname\": \"Tom\", \"lastname\": \"Okafor\", \"company\": \"Bluewater Freight\", \"message\": \"Team,\\n\\nBluewater Freight (1,200 employees) is consolidating three regional HubSpot portals. Before we merge we need the contact and company data deduplicated and standardized. Target is to finish by the end of this quarter. Please send over how you would approach it.\\n\\nTom Okafor\\nVP Revenue Operations\", \"demo_record\": \"true\"}}, {\"id\": \"elena.sokolova@example.com\", \"idProperty\": \"email\", \"properties\": {\"email\": \"elena.sokolova@example.com\", \"firstname\": \"Elena\", \"lastname\": \"Sokolova\", \"company\": \"Harborview Credit Union\", \"message\": \"Good morning,\\n\\nHarborview Credit Union has 640 employees. Our marketing team cannot currently report on campaign performance by branch. We are looking for a partner to build dashboards in HubSpot. We have an approved budget of up to $25,000. No hard deadline.\\n\\nElena Sokolova\\nMarketing Director\", \"demo_record\": \"true\"}}, {\"id\": \"jake.morrison@example.com\", \"idProperty\": \"email\", \"properties\": {\"email\": \"jake.morrison@example.com\", \"firstname\": \"Jake\", \"lastname\": \"Morrison\", \"company\": \"Morrison Landscaping\", \"message\": \"Hey, I own Morrison Landscaping, 12 guys. Want to set up automatic follow up emails after we send a quote. Is that something you do?\\n\\nJake\", \"demo_record\": \"true\"}}, {\"id\": \"sam.ortiz@example.com\", \"idProperty\": \"email\", \"properties\": {\"email\": \"sam.ortiz@example.com\", \"firstname\": \"Sam\", \"lastname\": \"Ortiz\", \"company\": \"Ortiz & Sons\", \"message\": \"What do you charge?\\n\\nSam Ortiz\\nOrtiz & Sons\", \"demo_record\": \"true\"}}, {\"id\": \"joy.adeyemi@example.com\", \"idProperty\": \"email\", \"properties\": {\"email\": \"joy.adeyemi@example.com\", \"firstname\": \"Joy\", \"lastname\": \"Adeyemi\", \"company\": \"\", \"message\": \"FYI see below, my boss wants this sorted. Can you help?\\n\\nJoy\\n\\n---------- Forwarded message ----------\\nFrom: Martin Hale\\nSubject: CRM duplicates\\n\\nJoy, the duplicate records in HubSpot are out of hand. We're about 60 people now and it is only getting worse. Find someone to clean it up.\", \"demo_record\": \"true\"}}]}"
+      },
+      "name": "Upsert synthetic contacts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "u1WBi64R7zas6Zfn",
+          "name": "HubSpot Service Key account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "Property demo_record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Property demo_record": {
+      "main": [
+        [
+          {
+            "node": "Property demo_owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Property demo_owner": {
+      "main": [
+        [
+          {
+            "node": "Property lead_score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Property lead_score": {
+      "main": [
+        [
+          {
+            "node": "Property lead_band",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Property lead_band": {
+      "main": [
+        [
+          {
+            "node": "Property lead_segment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Property lead_segment": {
+      "main": [
+        [
+          {
+            "node": "Property lead_score_reasons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Property lead_score_reasons": {
+      "main": [
+        [
+          {
+            "node": "Upsert synthetic contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
