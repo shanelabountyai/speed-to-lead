@@ -1,0 +1,66 @@
+[
+  {
+    "rule": "size_50_to_500",
+    "field": "company_size",
+    "min": 50,
+    "max": 500,
+    "equals": "",
+    "points": 30
+  },
+  {
+    "rule": "size_over_500",
+    "field": "company_size",
+    "min": 501,
+    "max": "",
+    "equals": "",
+    "points": 20
+  },
+  {
+    "rule": "size_under_50",
+    "field": "company_size",
+    "min": "",
+    "max": 49,
+    "equals": "",
+    "points": 10
+  },
+  {
+    "rule": "need_matches_service",
+    "field": "need",
+    "min": "",
+    "max": "",
+    "equals": "crm_cleanup|automation_setup|reporting_dashboards",
+    "points": 25
+  },
+  {
+    "rule": "start_within_30_days",
+    "field": "urgency",
+    "min": "",
+    "max": "",
+    "equals": "within_30_days",
+    "points": 20
+  },
+  {
+    "rule": "start_this_quarter",
+    "field": "urgency",
+    "min": "",
+    "max": "",
+    "equals": "this_quarter",
+    "points": 10
+  },
+  {
+    "rule": "budget_stated",
+    "field": "budget_stated",
+    "min": "",
+    "max": "",
+    "equals": "true",
+    "points": 15
+  },
+  {
+    "rule": "business_email",
+    "field": "business_email",
+    "min": "",
+    "max": "",
+    "equals": "true",
+    "points": 10
+  }
+]

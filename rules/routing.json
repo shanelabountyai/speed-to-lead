@@ -1,0 +1,26 @@
+[
+  {
+    "segment": "under_50",
+    "min_size": "",
+    "max_size": 49,
+    "owners": "Avery"
+  },
+  {
+    "segment": "50_to_500",
+    "min_size": 50,
+    "max_size": 500,
+    "owners": "Jordan|Casey"
+  },
+  {
+    "segment": "over_500",
+    "min_size": 501,
+    "max_size": "",
+    "owners": "Sam"
+  },
+  {
+    "segment": "size_not_stated",
+    "min_size": "",
+    "max_size": "",
+    "owners": "Avery"
+  }
+]

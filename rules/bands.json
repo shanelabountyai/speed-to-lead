@@ -1,0 +1,20 @@
+[
+  {
+    "band": "hot",
+    "min_score": 70,
+    "draft": "true",
+    "task_due": "today"
+  },
+  {
+    "band": "warm",
+    "min_score": 40,
+    "draft": "true",
+    "task_due": "next_business_day"
+  },
+  {
+    "band": "cool",
+    "min_score": 0,
+    "draft": "false",
+    "task_due": ""
+  }
+]

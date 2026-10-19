@@ -1,0 +1,18 @@
+[
+  {
+    "key": "daily_cap_usd",
+    "value": "2.00"
+  },
+  {
+    "key": "extract_model",
+    "value": "claude-haiku-4-5-20251001"
+  },
+  {
+    "key": "demo_mode",
+    "value": "true"
+  },
+  {
+    "key": "free_mail_domains",
+    "value": "freemail.example"
+  }
+]
