@@ -1,0 +1,11 @@
+{
+  "name": "speed-to-lead",
+  "private": true,
+  "description": "Offline checks for the N1 n8n workflows and eval fixtures. No dependencies.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}
