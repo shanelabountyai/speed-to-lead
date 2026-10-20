@@ -96,7 +96,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Seen = any log row for this message with a non-error outcome. Replay-safe: re-running changes nothing.\nconst rows = $('Read run log').all().map(i => i.json).filter(r => r.source_id);\nconst done = new Set(rows.filter(r => r.outcome !== 'error').map(r => r.source_id));\nreturn $('List labelled mail').all()\n  .filter(i => !done.has(i.json.id))\n  .map(i => ({ json: {\n    source: 'gmail',\n    source_id: i.json.id,\n    from: i.json.from?.value?.[0]?.address ?? '',\n    subject: i.json.subject ?? '',\n  }}));"
+        "jsCode": "// Seen = any log row for this message with a non-error outcome. Replay-safe: re-running changes nothing.\nconst rows = $('Read run log').all().map(i => i.json).filter(r => r.source_id);\n// String(): Sheets can hand back an all-digit id as a number, which would never match the string id and re-process the message every poll.\nconst done = new Set(rows.filter(r => r.outcome !== 'error').map(r => String(r.source_id)));\nreturn $('List labelled mail').all()\n  .filter(i => !done.has(String(i.json.id)))\n  .map(i => ({ json: {\n    source: 'gmail',\n    source_id: i.json.id,\n    from: i.json.from?.value?.[0]?.address ?? '',\n    subject: i.json.subject ?? '',\n  }}));"
       },
       "name": "Pick unseen",
       "type": "n8n-nodes-base.code",
