@@ -2,7 +2,8 @@
 Checks outcome class, score, band, segment, owner (rules: 100%) and prints mismatches plus total cost."""
 import json, sys, pathlib
 root = pathlib.Path(__file__).resolve().parent.parent
-fx = {f["id"]: f for f in json.load(open(root / "fixtures/n1-fixtures.json"))["fixtures"]}
+name = sys.argv[2] if len(sys.argv) > 2 else "n1-fixtures"
+fx = {f["id"]: f for f in json.load(open(root / f"fixtures/{name}.json"))["fixtures"]}
 s = open(sys.argv[1]).read()
 d = json.loads(s[s.index("{\n"):s.rindex("}") + 1])
 rows = [i["json"] for i in d["data"]["resultData"]["runData"]["Process lead"][0]["data"]["main"][0]]

@@ -1,6 +1,6 @@
 {
   "id": "n1DevEvalRun0001",
-  "name": "Dev: run all fixtures through process lead",
+  "name": "Dev: run n1-fixtures through process lead",
   "nodes": [
     {
       "parameters": {},
