@@ -59,3 +59,11 @@ test('tablesFromRanges pads short rows; todayCost sums only today', () => {
   assert.deepStrictEqual(t.bands, []);
   assert.strictEqual(L.todayCost(t.runs, '2026-10-20'), 0.5);
 });
+
+test('hubspotEmail maps the .example TLD to example.com and leaves real-format addresses alone', () => {
+  assert.strictEqual(L.hubspotEmail('a@northwind.example'), 'a@northwind.example.com');
+  assert.strictEqual(L.hubspotEmail('a@example.com'), 'a@example.com');
+  assert.ok(L.demoAllowed('a@northwind.example.com'));
+  const d = L.decideBatch([{ msg: { source: 'x', source_id: '1', from_email: 'dana@northwind.example' }, ex: { ...fx.fixtures[0].labels, name: 'Dana Whitfield' } }], tables, [])[0];
+  assert.strictEqual(L.contactInput(d).id, 'dana@northwind.example.com');
+});

@@ -15,7 +15,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://sheets.googleapis.com/v4/spreadsheets/1tf-R3Nx1leSg4i4rBwCq8XzItWzUk-qID06-js_AOcY/values/runs!A2:G:clear",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1tf-R3Nx1leSg4i4rBwCq8XzItWzUk-qID06-js_AOcY/values/runs!A2:M:clear",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleSheetsOAuth2Api"
       },
@@ -36,7 +36,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://sheets.googleapis.com/v4/spreadsheets/1tf-R3Nx1leSg4i4rBwCq8XzItWzUk-qID06-js_AOcY/values/review!A2:G:clear",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/1tf-R3Nx1leSg4i4rBwCq8XzItWzUk-qID06-js_AOcY/values/review!A2:M:clear",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleSheetsOAuth2Api"
       },

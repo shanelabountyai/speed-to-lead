@@ -96,7 +96,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Seen = any log row for this message with a non-error outcome. Replay-safe: re-running changes nothing.\nconst rows = $('Read run log').all().map(i => i.json).filter(r => r.source_id);\nconst done = new Set(rows.filter(r => r.outcome !== 'error').map(r => r.source_id));\nreturn $('List labelled mail').all()\n  .filter(i => !done.has(i.json.id))\n  .map(i => ({ json: {\n    source: 'gmail',\n    source_id: i.json.id,\n    from: i.json.from?.value?.[0]?.address ?? '',\n    subject: i.json.subject ?? '',\n  }}));"
+        "jsCode": "// Seen = any log row for this message with a non-error outcome. Replay-safe: re-running changes nothing.\nconst rows = $('Read run log').all().map(i => i.json).filter(r => r.source_id);\nconst done = new Set(rows.filter(r => r.outcome !== 'error').map(r => r.source_id));\nreturn $('List labelled mail').all()\n  .filter(i => !done.has(i.json.id))\n  .map(i => {\n    const text = String(i.json.text ?? i.json.snippet ?? '');\n    // Demo mode: the seed script puts the fixture's sender on a 'Demo-From:' first line, so a test message sent from a real mailbox carries a synthetic sender.\n    const demo = text.match(/^\\s*Demo-From:\\s*(\\S+)/i);\n    return { json: {\n      source: 'gmail',\n      source_id: i.json.id,\n      from_email: demo ? demo[1] : (i.json.from?.value?.[0]?.address ?? ''),\n      subject: i.json.subject ?? '',\n      body: demo ? text.replace(/^\\s*Demo-From:.*\\n?/i, '') : text,\n    }};\n  });"
       },
       "name": "Pick unseen",
       "type": "n8n-nodes-base.code",
@@ -107,82 +107,20 @@
       ]
     },
     {
-      "parameters": {},
-      "name": "Phase 2 stub: extract, score, route, draft",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
-      "position": [
-        880,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "a0",
-              "name": "source",
-              "value": "={{ $json.source }}",
-              "type": "string"
-            },
-            {
-              "id": "a1",
-              "name": "source_id",
-              "value": "={{ $json.source_id }}",
-              "type": "string"
-            },
-            {
-              "id": "a2",
-              "name": "outcome",
-              "value": "spine_ok",
-              "type": "string"
-            },
-            {
-              "id": "a3",
-              "name": "time_to_draft_s",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "id": "a4",
-              "name": "cost_usd",
-              "value": 0,
-              "type": "number"
-            },
-            {
-              "id": "a5",
-              "name": "error",
-              "value": "",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "name": "Shape log row",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        1100,
-        0
-      ]
-    },
-    {
       "parameters": {
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "n1RunLogWriter01",
+          "value": "n1ProcessLead0001",
           "mode": "id"
         },
         "options": {}
       },
-      "name": "Write run log",
+      "name": "Process lead",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        1320,
+        880,
         0
       ]
     }
@@ -225,29 +163,7 @@
       "main": [
         [
           {
-            "node": "Phase 2 stub: extract, score, route, draft",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Phase 2 stub: extract, score, route, draft": {
-      "main": [
-        [
-          {
-            "node": "Shape log row",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Shape log row": {
-      "main": [
-        [
-          {
-            "node": "Write run log",
+            "node": "Process lead",
             "type": "main",
             "index": 0
           }
