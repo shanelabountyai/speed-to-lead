@@ -1,5 +1,7 @@
 # Next
 
+**Pick up: Phase 3, the reply** (P0-6 draft, P0-7 approval). Decide the draft model first (open question below). Draft from an approved template plus extracted facts only; Gmail draft only (never send); HubSpot task due per band (`bands` tab `task_due`); log `time_to_draft_s`; planted-fabrication check (no price, date or commitment). n8n is stopped; start it with the command below. Google OAuth in Testing mode lapses every 7 days (last reconnected 2026-10-16, still worked 2026-10-23): reconnect if a node says so.
+
 Status (2026-10-20): Phase 1 spine built and verified except HubSpot-source replay. Phase 2 built: `process-lead` runs all 40 fixtures end to end, 40/40 on outcome, score, band, segment and owner, $0.04 per 40 leads. Live intake wiring and the cap/failure paths are NOT yet tested (see Phase 2 below).
 
 1. Phase 1, the spine: triggers (polling), idempotency, error path, run log. No model calls.
