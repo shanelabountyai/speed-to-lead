@@ -14,5 +14,41 @@
   {
     "key": "free_mail_domains",
     "value": "freemail.example"
+  },
+  {
+    "key": "review_not_lead_kinds",
+    "value": "existing_customer,partnership,other"
+  },
+  {
+    "key": "draft_model",
+    "value": "claude-haiku-4-5-20251001"
+  },
+  {
+    "key": "reply_subject_new",
+    "value": "Your enquiry to Tallgrass Advisory"
+  },
+  {
+    "key": "reply_template",
+    "value": "Hi {first_name},\\n\\nThanks for getting in touch about {need_phrase}. {ack}\\n\\nThe best next step is a short call, so we can understand your setup and tell you honestly whether we are the right fit. Reply with a couple of times that suit you and I will send an invite.\\n\\nBest,\\n{owner}\\nTallgrass Advisory"
+  },
+  {
+    "key": "need_phrase_crm_cleanup",
+    "value": "cleaning up your CRM"
+  },
+  {
+    "key": "need_phrase_automation_setup",
+    "value": "setting up your marketing automation"
+  },
+  {
+    "key": "need_phrase_reporting_dashboards",
+    "value": "your reporting and dashboards"
+  },
+  {
+    "key": "need_phrase_other",
+    "value": "what you are looking for"
+  },
+  {
+    "key": "hubspot_owner_id",
+    "value": ""
   }
 ]

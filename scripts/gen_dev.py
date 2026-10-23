@@ -41,7 +41,7 @@ arch = http("Archive demo contacts", [660, 0], "POST", "https://api.hubapi.com/c
 json.dump(wf("n1DevTeardownHs01", "Dev: teardown (archive every demo_record contact)", [manual(), search, shape, arch]), open(root / "workflows/dev-teardown-hubspot.json", "w"), indent=2)
 
 # ---- Sheet: rule tabs and the wider run-log header
-RUNS = ["time", "source", "source_id", "outcome", "time_to_draft_s", "cost_usd", "error", "score", "band", "segment", "demo_owner", "input_tokens", "output_tokens"]
+RUNS = ["time", "source", "source_id", "outcome", "time_to_draft_s", "cost_usd", "error", "score", "band", "segment", "demo_owner", "input_tokens", "output_tokens", "draft_id", "thread_id", "draft_check", "task_id", "approval", "approval_at"]
 tabs = {"score_rules": rd("score_rules"), "bands": rd("bands"), "routing": rd("routing"), "rates": rd("rates"), "config": rd("config")}
 base = f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET}"
 nodes = [manual(), http("Add tabs", [220, 0], "POST", f"{base}:batchUpdate", js({"requests": [{"addSheet": {"properties": {"title": t}}} for t in tabs]}), GS, "googleSheetsOAuth2Api", True)]

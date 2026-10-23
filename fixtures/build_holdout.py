@@ -70,7 +70,7 @@ counts = {}
 for f in F:
     lab = f["labels"]; dom = f["from_email"].split("@")[1]; e = {"business_email": dom not in FREE}
     if not lab["is_lead"]:
-        e.update(outcome="review" if f["category"] == "injection" else "not_a_lead", contact_created=False, draft_created=False)
+        e.update(outcome="review" if f["category"] == "injection" else "review_not_a_lead" if f["labels"]["not_lead_kind"] in ("existing_customer", "partnership", "other") else "not_a_lead", contact_created=False, draft_created=False)
     else:
         val = lambda field: e["business_email"] if field == "business_email" else lab[field]
         fired = [r for r in rules if hit(r, val(r["field"]))]

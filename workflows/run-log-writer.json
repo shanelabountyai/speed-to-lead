@@ -42,7 +42,13 @@
             "segment": "={{ $json.segment ?? '' }}",
             "demo_owner": "={{ $json.demo_owner ?? '' }}",
             "input_tokens": "={{ $json.input_tokens ?? '' }}",
-            "output_tokens": "={{ $json.output_tokens ?? '' }}"
+            "output_tokens": "={{ $json.output_tokens ?? '' }}",
+            "draft_id": "={{ $json.draft_id ?? '' }}",
+            "thread_id": "={{ $json.thread_id ?? '' }}",
+            "draft_check": "={{ $json.draft_check ?? '' }}",
+            "task_id": "={{ $json.task_id ?? '' }}",
+            "approval": "={{ $json.approval ?? '' }}",
+            "approval_at": "={{ $json.approval_at ?? '' }}"
           },
           "matchingColumns": [
             "source_id"
@@ -159,6 +165,60 @@
             {
               "id": "output_tokens",
               "displayName": "output_tokens",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "draft_id",
+              "displayName": "draft_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "thread_id",
+              "displayName": "thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "draft_check",
+              "displayName": "draft_check",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "task_id",
+              "displayName": "task_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "approval",
+              "displayName": "approval",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "approval_at",
+              "displayName": "approval_at",
               "required": false,
               "defaultMatch": false,
               "display": true,

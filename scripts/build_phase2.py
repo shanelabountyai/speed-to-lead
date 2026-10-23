@@ -6,6 +6,7 @@ root = pathlib.Path(__file__).resolve().parent.parent
 SHEET = "1tf-R3Nx1leSg4i4rBwCq8XzItWzUk-qID06-js_AOcY"
 GS = {"googleSheetsOAuth2Api": {"id": "McOy4auCNkFX0Os2", "name": "Google Sheets account"}}
 AN = {"anthropicApi": {"id": "iX5UtPD5bryOqgFt", "name": "Anthropic account"}}
+GM = {"gmailOAuth2": {"id": "GGGxY4DRdE9giH2x", "name": "Gmail account"}}
 HS = {"hubspotAppToken": {"id": "u1WBi64R7zas6Zfn", "name": "HubSpot Service Key account"}}
 READ_RETRY = dict(retryOnFail=True, maxTries=3, waitBetweenTries=2000)
 PROCESS_ID, WRITER_ID = "n1ProcessLead0001", "n1RunLogWriter01"
@@ -13,9 +14,9 @@ PROCESS_ID, WRITER_ID = "n1ProcessLead0001", "n1RunLogWriter01"
 def bundle():
     """scoring.js + lead.js as one prelude defining `L` (lead.js exports) for a Code node."""
     out = "const __lib = {}; const require = (p) => __lib[p];\n"
-    for n in ("scoring", "lead"):
+    for n in ("scoring", "lead", "draft"):
         out += f"__lib['./{n}'] = (() => {{ const module = {{ exports: {{}} }};\n{(root / 'lib' / (n + '.js')).read_text()}\nreturn module.exports; }})();\n"
-    return out + "const L = __lib['./lead'];\n"
+    return out + "const L = __lib['./lead']; const D = __lib['./draft'];\n"
 PRELUDE = bundle()
 def code(name, pos, body, each=False, once=False):
     p = {"jsCode": PRELUDE + body}
@@ -40,7 +41,7 @@ def sheets_upsert(name, pos, tab, cols, match, **kw):
         "columns": {"mappingMode": "defineBelow", "value": {c: ("={{ $now.toISO() }}" if c == "time" else f"={{{{ $json.{c} }}}}") for c in cols}, "matchingColumns": [match],
                     "schema": [{"id": c, "displayName": c, "required": False, "defaultMatch": False, "display": True, "type": "string", "canBeUsedToMatch": True} for c in cols]}, "options": {}},
         credentials=GS, retryOnFail=False, **kw)
-RUNS = ["time", "source", "source_id", "outcome", "time_to_draft_s", "cost_usd", "error", "score", "band", "segment", "demo_owner", "input_tokens", "output_tokens"]
+RUNS = ["time", "source", "source_id", "outcome", "time_to_draft_s", "cost_usd", "error", "score", "band", "segment", "demo_owner", "input_tokens", "output_tokens", "draft_id", "thread_id", "draft_check", "task_id", "approval", "approval_at"]
 REVIEW = ["time", "source", "source_id", "from", "subject", "reason", "raw_output"]
 
 # ---------------- run-log writer: wider columns
@@ -64,7 +65,7 @@ if (spent >= Number(cfg.daily_cap_usd)) throw new Error(`Daily cost cap reached:
 return $('When called').all().map((it, idx) => {
   const msg = it.json;
   const allowed = !(cfg.demo_mode === 'true' && !L.demoAllowed(msg.from_email));
-  return { json: { idx, msg, allowed, request: allowed ? L.buildRequest(msg, cfg.extract_model) : null } };
+  return { json: { idx, msg, allowed, started_at: $now.toISO(), request: allowed ? L.buildRequest(msg, cfg.extract_model) : null } };
 });""", once=True))
 nodes.append(node("Allowed?", "n8n-nodes-base.if", 2.2, [660, 0], cond_bool("={{ $json.allowed }}")))
 nodes.append(node("Extract", "n8n-nodes-base.httpRequest", 4.2, [880, -120], {"method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi",
@@ -95,7 +96,7 @@ return decided.map((d, k) => {
   const cost = it.skipped ? 0 : L.costUsd(it.usage, T.rates, cfg.extract_model);
   return { json: { ...d, raw: it.raw ?? '', cost_usd: Number(cost.toFixed(6)), input_tokens: it.usage.input_tokens, output_tokens: it.usage.output_tokens } };
 });""", once=True))
-nodes.append(code("Build upsert", [2420, 0], "return [{ json: { inputs: $input.all().map((i) => i.json).filter((d) => d.contact).map(L.contactInput) } }];", once=True))
+nodes.append(code("Build upsert", [2420, 0], "return [{ json: { inputs: L.upsertInputs($input.all().map((i) => i.json)) } }];", once=True))
 nodes.append(node("Any contacts?", "n8n-nodes-base.if", 2.2, [2640, 0], {"conditions": {"options": {"caseSensitive": True, "leftValue": "", "typeValidation": "strict", "version": 2},
     "conditions": [{"id": "c2", "leftValue": "={{ $json.inputs.length }}", "rightValue": 0, "operator": {"type": "number", "operation": "gt"}}], "combinator": "and"}, "options": {}}))
 nodes.append(node("Upsert contacts", "n8n-nodes-base.httpRequest", 4.2, [2860, -80], {"method": "POST", "url": "https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert", "authentication": "predefinedCredentialType", "nodeCredentialType": "hubspotAppToken",
@@ -106,12 +107,88 @@ const want = $('Build upsert').first().json.inputs.length;
 const r = $json;
 if (r.status !== 'COMPLETE' || (r.errors && r.errors.length) || (r.results ?? []).length !== want) throw new Error(`HubSpot upsert incomplete: ${r.status}, ${(r.results ?? []).length}/${want} records, ${JSON.stringify(r.errors ?? []).slice(0, 300)}`);
 return [{ json: { ok: true } }];""", once=True))
+CONTINUE = dict(onError="continueRegularOutput", retryOnFail=False)  # a write that throws mid-batch would re-run the batch next poll and duplicate drafts
+nodes.append(code("Draft prep", [3300, -300], """
+// Leads that get a draft: decided contact_draft_pending, not already drafted (replay guard on the run log's draft_id).
+const T = L.tablesFromRanges($('Load tables').first().json.valueRanges);
+const cfg = D.cfgOf(T);
+const drafted = new Set(T.runs.filter((r) => r.draft_id).map((r) => r.source_id));
+const ids = Object.fromEntries(($('Upsert contacts').first().json.results ?? []).map((r) => [String(r.properties?.email).toLowerCase(), r.id]));
+const msgs = Object.fromEntries($('When called').all().map((i) => [i.json.source_id, i.json]));
+const todo = $('Decide').all().map((i) => i.json).filter((d) => d.outcome === 'contact_draft_pending' && !drafted.has(d.source_id))
+  .map((d) => ({ d, msg: msgs[d.source_id], contact_id: ids[L.hubspotEmail(d.from_email).toLowerCase()], request: D.buildDraftRequest(msgs[d.source_id], cfg.draft_model) }));
+return [{ json: { todo } }];""", once=True))
+nodes.append(node("Any drafts?", "n8n-nodes-base.if", 2.2, [3520, -300], {"conditions": {"options": {"caseSensitive": True, "leftValue": "", "typeValidation": "strict", "version": 2},
+    "conditions": [{"id": "c3", "leftValue": "={{ $json.todo.length }}", "rightValue": 0, "operator": {"type": "number", "operation": "gt"}}], "combinator": "and"}, "options": {}}))
+nodes.append(code("Split drafts", [3740, -400], "return $json.todo.map((t) => ({ json: t }));", once=True))
+nodes.append(node("Write ack", "n8n-nodes-base.httpRequest", 4.2, [3960, -400], {"method": "POST", "url": "https://api.anthropic.com/v1/messages", "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi",
+    "sendHeaders": True, "headerParameters": {"parameters": [{"name": "anthropic-version", "value": "2023-06-01"}]}, "sendBody": True, "specifyBody": "json", "jsonBody": "={{ JSON.stringify($json.request) }}"},
+    credentials=AN, onError="continueRegularOutput", retryOnFail=True, maxTries=2, waitBetweenTries=3000))  # a read: retry is safe; failure -> template-only draft
+nodes.append(code("Build draft", [4180, -400], """
+// The model's sentence is checked by rules; a rejected or failed sentence leaves the template-only draft.
+const t = $('Split drafts').item.json;
+const cfg = D.cfgOf(L.tablesFromRanges($('Load tables').first().json.valueRanges));
+const text = $json.content?.[0]?.text;
+const c = text === undefined ? { ok: false, reason: 'model error: ' + String($json.error?.message ?? $json.error ?? 'no content').slice(0, 120), text: '' } : D.checkAck(text);
+const { subject, body } = D.fillTemplate(t.d, c.ok ? c.text : '', cfg);
+const raw = D.mimeRaw({ to: L.hubspotEmail(t.d.from_email), subject, body, inReplyTo: t.msg.message_id || '' });
+const draft = { message: { raw } };
+if (t.msg.thread_id) draft.message.threadId = t.msg.thread_id;
+return { json: { ...t, draft, draft_check: c.ok ? 'ok' : `template_only: ${c.reason} | ${String(c.text).slice(0, 250)}`, rejected_text: c.ok ? '' : c.text, usage: $json.usage ?? { input_tokens: 0, output_tokens: 0 } } };""", each=True))
+nodes.append(node("Create draft", "n8n-nodes-base.httpRequest", 4.2, [4400, -400], {"method": "POST", "url": "https://gmail.googleapis.com/gmail/v1/users/me/drafts", "authentication": "predefinedCredentialType", "nodeCredentialType": "gmailOAuth2",
+    "sendBody": True, "specifyBody": "json", "jsonBody": "={{ JSON.stringify($json.draft) }}"}, credentials=GM, **CONTINUE))
+nodes.append(code("Build tasks", [4620, -400], """
+const T = L.tablesFromRanges($('Load tables').first().json.valueRanges);
+const cfg = D.cfgOf(T);
+const now = $now.toISO();
+const built = $('Build draft').all().map((i) => i.json);
+const out = $input.all().map((i, k) => {
+  const b = built[k], r = i.json, ok = !!r.id;
+  const started = Date.parse(b.msg.received_at || $('Prep').first().json.started_at);
+  return { source_id: b.d.source_id, d: b.d, contact_id: b.contact_id, draft_ok: ok, draft_id: r.id ?? '', draft_msg_id: r.message?.id ?? '', thread_id: r.message?.threadId ?? '',
+    draft_error: ok ? '' : String(r.error?.message ?? JSON.stringify(r.error ?? r)).slice(0, 200), draft_check: b.draft_check, rejected_text: b.rejected_text, usage: b.usage,
+    time_to_draft_s: ok ? Math.round((Date.now() - started) / 1000) : '' };
+});
+const inputs = out.filter((o) => o.draft_ok && o.contact_id).map((o) => D.taskInput(o.d, o.contact_id, o.draft_msg_id, now, cfg.hubspot_owner_id));
+return [{ json: { out, body: { inputs } } }];""", once=True))
+nodes.append(node("Create tasks", "n8n-nodes-base.httpRequest", 4.2, [4840, -400], {"method": "POST", "url": "https://api.hubapi.com/crm/v3/objects/tasks/batch/create", "authentication": "predefinedCredentialType", "nodeCredentialType": "hubspotAppToken",
+    "sendBody": True, "specifyBody": "json", "jsonBody": "={{ JSON.stringify($json.body) }}"}, credentials=HS, **CONTINUE))
+nodes.append(code("Draft results", [5060, -400], """
+// Batch create returns results in input order. A failed task batch is logged per lead (task_id 'error: ...') and reviewed, never retried.
+const { out } = $('Build tasks').first().json;
+const r = $json;
+const ok = Array.isArray(r.results) && r.status === 'COMPLETE';
+let k = 0;
+for (const o of out) {
+  if (!(o.draft_ok && o.contact_id)) { o.task_id = ''; continue; }
+  o.task_id = ok ? r.results[k++]?.id ?? '' : 'error: ' + String(r.error?.message ?? r.message ?? JSON.stringify(r)).slice(0, 150);
+}
+return [{ json: { drafts: out } }];""", once=True))
 nodes.append(node("Contacts done", "n8n-nodes-base.noOp", 1, [3300, 0], {}))
 nodes.append(code("Review rows", [3520, -100], """
-return $('Decide').all().map((i) => i.json).filter((d) => d.review).map((d) => ({ json: { source: d.source, source_id: d.source_id, from: d.from_email, subject: d.subject, reason: d.review_reason, raw_output: d.raw || '' } }));""", once=True))
+let drafts = {}; try { drafts = Object.fromEntries($('Draft results').first().json.drafts.map((o) => [o.source_id, o])); } catch (e) { /* no drafts this run */ }
+const why = (d) => d.review ? d.review_reason : drafts[d.source_id]?.draft_error ? 'draft not created: ' + drafts[d.source_id].draft_error
+  : String(drafts[d.source_id]?.task_id ?? '').startsWith('error') ? 'HubSpot task not created: ' + drafts[d.source_id].task_id : '';
+return $('Decide').all().map((i) => i.json).filter((d) => why(d)).map((d) => ({ json: { source: d.source, source_id: d.source_id, from: d.from_email, subject: d.subject, reason: why(d), raw_output: d.raw || '' } }));""", once=True))
 nodes.append(sheets_upsert("Write review", [3740, -100], "review", REVIEW, "source_id"))
 nodes.append(code("Log rows", [3520, 120], """
-return $('Decide').all().map((i) => i.json).map((d) => ({ json: { source: d.source, source_id: d.source_id, outcome: d.outcome, time_to_draft_s: '', cost_usd: d.cost_usd, error: '', score: d.score ?? '', band: d.band ?? '', segment: d.segment ?? '', demo_owner: d.demo_owner ?? '', input_tokens: d.input_tokens, output_tokens: d.output_tokens } }));""", once=True))
+let drafts = {}; try { drafts = Object.fromEntries($('Draft results').first().json.drafts.map((o) => [o.source_id, o])); } catch (e) { /* no drafts this run */ }
+const T = L.tablesFromRanges($('Load tables').first().json.valueRanges);
+const cfg = D.cfgOf(T);
+// A replayed lead that was already drafted keeps its draft, task and approval fields (Draft prep skipped it).
+const prior = Object.fromEntries(T.runs.filter((r) => r.draft_id).map((r) => [r.source_id, r]));
+const KEEP = ['time_to_draft_s', 'draft_id', 'thread_id', 'draft_check', 'task_id', 'approval', 'approval_at'];
+return $('Decide').all().map((i) => i.json).map((d) => {
+  const x = drafts[d.source_id];
+  const p = !x && prior[d.source_id];
+  if (p) return { json: { source: d.source, source_id: d.source_id, outcome: p.outcome, cost_usd: d.cost_usd, error: '', score: d.score ?? '', band: d.band ?? '', segment: d.segment ?? '', demo_owner: d.demo_owner ?? '',
+    input_tokens: d.input_tokens, output_tokens: d.output_tokens, ...Object.fromEntries(KEEP.map((k) => [k, p[k] ?? ''])) } };
+  const u = x?.usage ?? { input_tokens: 0, output_tokens: 0 };
+  const cost = d.cost_usd + (x ? L.costUsd(u, T.rates, cfg.draft_model) : 0);
+  return { json: { source: d.source, source_id: d.source_id, outcome: x?.draft_error ? 'contact_draft_failed' : d.outcome, time_to_draft_s: x?.time_to_draft_s ?? '', cost_usd: Number(cost.toFixed(6)), error: x?.draft_error ?? '',
+    score: d.score ?? '', band: d.band ?? '', segment: d.segment ?? '', demo_owner: d.demo_owner ?? '', input_tokens: d.input_tokens + (u.input_tokens ?? 0), output_tokens: d.output_tokens + (u.output_tokens ?? 0),
+    draft_id: x?.draft_id ?? '', thread_id: x?.thread_id ?? '', draft_check: x?.draft_check ?? '', task_id: x?.task_id ?? '', approval: x?.draft_id ? 'pending' : '', approval_at: '' } };
+});""", once=True))
 nodes.append(node("Write run log", "n8n-nodes-base.executeWorkflow", 1.2, [3740, 120], {"source": "database", "workflowId": {"__rl": True, "value": WRITER_ID, "mode": "id"}, "options": {}}))
 c = {}
 for a, b in [("When called", "Load tables"), ("Load tables", "Prep"), ("Prep", "Allowed?")]: link(c, a, b)
@@ -124,7 +201,9 @@ link(c, "Retry extract", "Validate retry"); link_in(c, "Validate retry", "Gather
 c["Valid?"] = {"main": [[{"node": "Gather", "type": "main", "index": 0}], [{"node": "Retry extract", "type": "main", "index": 0}]]}
 for a, b in [("Gather", "Decide"), ("Decide", "Build upsert"), ("Build upsert", "Any contacts?")]: link(c, a, b)
 link(c, "Any contacts?", "Upsert contacts", 0); link(c, "Any contacts?", "Contacts done", 1)
-link(c, "Upsert contacts", "Verify upsert"); link(c, "Verify upsert", "Contacts done")
+link(c, "Upsert contacts", "Verify upsert"); link(c, "Verify upsert", "Draft prep"); link(c, "Draft prep", "Any drafts?")
+link(c, "Any drafts?", "Split drafts", 0); link(c, "Any drafts?", "Contacts done", 1)
+for a, b in [("Split drafts", "Write ack"), ("Write ack", "Build draft"), ("Build draft", "Create draft"), ("Create draft", "Build tasks"), ("Build tasks", "Create tasks"), ("Create tasks", "Draft results"), ("Draft results", "Contacts done")]: link(c, a, b)
 link(c, "Contacts done", "Review rows"); link(c, "Contacts done", "Log rows")
 link(c, "Review rows", "Write review"); link(c, "Log rows", "Write run log")
 json.dump(wf(PROCESS_ID, "N1 process lead (phase 2)", nodes, c, {"errorWorkflow": "n1ErrorHandler01"}), open(root / "workflows/process-lead.json", "w"), indent=2)
@@ -155,6 +234,7 @@ return $('List labelled mail').all()
       from_email: demo ? demo[1] : (i.json.from?.value?.[0]?.address ?? ''),
       subject: i.json.subject ?? '',
       body: demo ? text.replace(/^\\s*Demo-From:.*\\n?/i, '') : text,
+      thread_id: i.json.threadId ?? '', message_id: i.json.messageId ?? '', received_at: i.json.date ?? '',
     }};
   });""")
 rewire("workflows/intake-hubspot-phase1.json", """// ponytail: looks back 24h and dedupes against the run log, so a missed poll or a failed run is retried. Longer outages need a wider window.
@@ -163,11 +243,36 @@ const done = new Set(rows.filter(r => r.outcome !== 'error').map(r => r.source_i
 return ($('Search new contacts').first().json.results ?? [])
   .filter(c => !done.has('hubspot:' + c.id))
   .map(c => ({ json: { source: 'hubspot', source_id: 'hubspot:' + c.id, from_email: c.properties?.email ?? '',
-    subject: 'HubSpot form', body: [c.properties?.firstname, c.properties?.lastname].filter(Boolean).join(' ') + '\\n' + (c.properties?.company ?? '') + '\\n\\n' + (c.properties?.message ?? '') } }));""")
+    subject: 'HubSpot form', body: [c.properties?.firstname, c.properties?.lastname].filter(Boolean).join(' ') + '\\n' + (c.properties?.company ?? '') + '\\n\\n' + (c.properties?.message ?? ''), received_at: c.createdAt ?? '' } }));""")
 # the HubSpot search must also return the form message
 w = json.load(open(root / "workflows/intake-hubspot-phase1.json"))
 for n in w["nodes"]:
     if n["name"] == "Search new contacts":
         n["parameters"]["jsonBody"] = n["parameters"]["jsonBody"].replace("'company']", "'company', 'message']")
 json.dump(w, open(root / "workflows/intake-hubspot-phase1.json", "w"), indent=2)
+# ---------------- approval check (P0-7): records sent / discarded against the run, from Gmail state. Never sends.
+NEVER_ERR = {"response": {"response": {"neverError": True}}}  # a 404 is an answer here (draft gone), not a failure
+def gmail_get(name, pos, url):
+    return node(name, "n8n-nodes-base.httpRequest", 4.2, pos, {"method": "GET", "url": url, "authentication": "predefinedCredentialType", "nodeCredentialType": "gmailOAuth2", "options": NEVER_ERR}, credentials=GM, **READ_RETRY)
+an = [node("Every 30 minutes", "n8n-nodes-base.scheduleTrigger", 1.2, [0, -100], {"rule": {"interval": [{"field": "minutes", "minutesInterval": 30}]}}),
+      node("Run now (manual)", "n8n-nodes-base.manualTrigger", 1, [0, 100], {}),
+      node("Read run log", "n8n-nodes-base.googleSheets", 4.7, [220, 0], {"documentId": {"__rl": True, "value": SHEET, "mode": "id"}, "sheetName": {"__rl": True, "value": "runs", "mode": "name"}, "options": {}}, credentials=GS, **READ_RETRY),
+      code("Pending", [440, 0], "return $input.all().map((i) => i.json).filter((r) => r.approval === 'pending' && r.draft_id).map((r) => ({ json: { source_id: r.source_id, draft_id: r.draft_id, thread_id: r.thread_id, time: r.time } }));", once=True),
+      gmail_get("Get draft", [660, 0], "=https://gmail.googleapis.com/gmail/v1/users/me/drafts/{{ $json.draft_id }}?format=minimal"),
+      gmail_get("Get thread", [880, 0], "=https://gmail.googleapis.com/gmail/v1/users/me/threads/{{ $('Pending').item.json.thread_id }}?format=minimal"),
+      code("Decide approval", [1100, 0], """
+// Draft present -> still pending. Gone -> sent if the thread holds a SENT message from after the draft, else discarded.
+// Any other error (auth, quota) throws: guessing 'discarded' from a failed read would record a false outcome.
+return $('Pending').all().map((p, k) => {
+  const dr = $('Get draft').all()[k].json, th = $('Get thread').all()[k].json;
+  if (dr.error && dr.error.code !== 404) throw new Error(`Gmail draft read failed for ${p.json.source_id}: ${dr.error.message}`);
+  if (th.error && th.error.code !== 404) throw new Error(`Gmail thread read failed for ${p.json.source_id}: ${th.error.message}`);
+  const state = D.approvalState(!!dr.id, th.messages, Date.parse(p.json.time));
+  return { json: { source_id: p.json.source_id, approval: state } };
+}).filter((i) => i.json.approval !== 'pending');""", once=True),
+      sheets_upsert("Record approval", [1320, 0], "runs", ["source_id", "approval", "approval_at"], "source_id")]
+an[-1]["parameters"]["columns"]["value"]["approval_at"] = "={{ $now.toISO() }}"
+ac = {}
+for a_, b_ in [("Every 30 minutes", "Read run log"), ("Run now (manual)", "Read run log"), ("Read run log", "Pending"), ("Pending", "Get draft"), ("Get draft", "Get thread"), ("Get thread", "Decide approval"), ("Decide approval", "Record approval")]: link(ac, a_, b_)
+json.dump(wf("n1ApprovalCheck01", "N1 approval check (phase 3)", an, ac, {"errorWorkflow": "n1ErrorHandler01"}), open(root / "workflows/approval-check.json", "w"), indent=2)
 print("ok")

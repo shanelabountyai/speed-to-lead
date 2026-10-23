@@ -94,7 +94,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ponytail: looks back 24h and dedupes against the run log, so a missed poll or a failed run is retried. Longer outages need a wider window.\nconst rows = $('Read run log').all().map(i => i.json).filter(r => r.source_id);\nconst done = new Set(rows.filter(r => r.outcome !== 'error').map(r => r.source_id));\nreturn ($('Search new contacts').first().json.results ?? [])\n  .filter(c => !done.has('hubspot:' + c.id))\n  .map(c => ({ json: { source: 'hubspot', source_id: 'hubspot:' + c.id, from_email: c.properties?.email ?? '',\n    subject: 'HubSpot form', body: [c.properties?.firstname, c.properties?.lastname].filter(Boolean).join(' ') + '\\n' + (c.properties?.company ?? '') + '\\n\\n' + (c.properties?.message ?? '') } }));"
+        "jsCode": "// ponytail: looks back 24h and dedupes against the run log, so a missed poll or a failed run is retried. Longer outages need a wider window.\nconst rows = $('Read run log').all().map(i => i.json).filter(r => r.source_id);\nconst done = new Set(rows.filter(r => r.outcome !== 'error').map(r => r.source_id));\nreturn ($('Search new contacts').first().json.results ?? [])\n  .filter(c => !done.has('hubspot:' + c.id))\n  .map(c => ({ json: { source: 'hubspot', source_id: 'hubspot:' + c.id, from_email: c.properties?.email ?? '',\n    subject: 'HubSpot form', body: [c.properties?.firstname, c.properties?.lastname].filter(Boolean).join(' ') + '\\n' + (c.properties?.company ?? '') + '\\n\\n' + (c.properties?.message ?? ''), received_at: c.createdAt ?? '' } }));"
       },
       "name": "Pick unseen",
       "type": "n8n-nodes-base.code",

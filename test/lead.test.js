@@ -67,3 +67,10 @@ test('hubspotEmail maps the .example TLD to example.com and leaves real-format a
   const d = L.decideBatch([{ msg: { source: 'x', source_id: '1', from_email: 'dana@northwind.example' }, ex: { ...fx.fixtures[0].labels, name: 'Dana Whitfield' } }], tables, [])[0];
   assert.strictEqual(L.contactInput(d).id, 'dana@northwind.example.com');
 });
+
+test('upsertInputs: one sender twice in a batch gives one record, later message wins', () => {
+  const lead = (id, company) => ({ msg: { source: 'gmail', source_id: id, from_email: 'Ravi@Calder.example', subject: '' }, ex: { ...fx.fixtures[0].labels, company } });
+  const out = L.upsertInputs(L.decideBatch([lead('1', 'Old Co'), lead('2', 'New Co')], tables, []));
+  assert.strictEqual(out.length, 1);
+  assert.strictEqual(out[0].properties.company, 'New Co');
+});

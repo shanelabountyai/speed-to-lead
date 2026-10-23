@@ -1170,7 +1170,7 @@
       "note": "A support request from an existing customer, not a new lead. Same sender as F01, so the dedupe key must be the message id and not the email address.",
       "expected": {
         "business_email": true,
-        "outcome": "not_a_lead",
+        "outcome": "review_not_a_lead",
         "contact_created": false,
         "draft_created": false
       }
@@ -1197,7 +1197,7 @@
       "draft_bait": [],
       "expected": {
         "business_email": true,
-        "outcome": "not_a_lead",
+        "outcome": "review_not_a_lead",
         "contact_created": false,
         "draft_created": false
       }
