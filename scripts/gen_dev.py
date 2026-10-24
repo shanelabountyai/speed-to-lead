@@ -33,12 +33,36 @@ def contact(f):
 seed = http("Upsert synthetic contacts", [220 + 220 * len(props), 0], "POST", "https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert", js({"inputs": [contact(f) for f in leads]}), HS, "hubspotAppToken")
 json.dump(wf("n1DevSeedHubspot1", "Dev: seed HubSpot properties and synthetic contacts", [manual()] + prop_nodes + [seed]), open(root / "workflows/dev-seed-hubspot.json", "w"), indent=2)
 
-# ---- HubSpot teardown: archive every demo_record contact
+# ---- Teardown: the tasks on every demo_record contact, then the contacts; and every Gmail draft addressed to example.com.
+# A Code node returning no items stops its branch, so the two branches start separately from the trigger.
+# ponytail: one page of 100 contacts / 500 drafts; run it twice if a demo ever leaves more.
+GM = {"gmailOAuth2": {"id": "GGGxY4DRdE9giH2x", "name": "Gmail account"}}
+code = lambda name, pos, src: node(name, "n8n-nodes-base.code", 2, pos, {"jsCode": src})
 search = http("Find demo contacts", [220, 0], "POST", "https://api.hubapi.com/crm/v3/objects/contacts/search",
               js({"filterGroups": [{"filters": [{"propertyName": "demo_record", "operator": "EQ", "value": "true"}]}], "limit": 100}), HS, "hubspotAppToken")
-shape = node("Shape archive batch", "n8n-nodes-base.code", 2, [440, 0], {"jsCode": "return [{ json: { inputs: ($json.results ?? []).map(c => ({ id: c.id })) } }];"})
-arch = http("Archive demo contacts", [660, 0], "POST", "https://api.hubapi.com/crm/v3/objects/contacts/batch/archive", "={{ JSON.stringify($json) }}", HS, "hubspotAppToken")
-json.dump(wf("n1DevTeardownHs01", "Dev: teardown (archive every demo_record contact)", [manual(), search, shape, arch]), open(root / "workflows/dev-teardown-hubspot.json", "w"), indent=2)
+ids = code("Contact ids", [440, 0], "const inputs = ($json.results ?? []).map(c => ({ id: c.id }));\nreturn inputs.length ? [{ json: { inputs } }] : [];")
+assoc = http("Their tasks", [660, 0], "POST", "https://api.hubapi.com/crm/v4/associations/contacts/tasks/batch/read", "={{ JSON.stringify($json) }}", HS, "hubspotAppToken")
+tasks = code("Task ids", [880, 0], "const inputs = [...new Set(($json.results ?? []).flatMap(r => r.to.map(t => String(t.toObjectId))))].map(id => ({ id }));\nreturn inputs.length ? [{ json: { inputs } }] : [{ json: { inputs: [] } }];")
+arch_t = http("Archive tasks", [1100, 0], "POST", "https://api.hubapi.com/crm/v3/objects/tasks/batch/archive", "={{ JSON.stringify($json) }}", HS, "hubspotAppToken", True)
+arch_c = http("Archive demo contacts", [1320, 0], "POST", "https://api.hubapi.com/crm/v3/objects/contacts/batch/archive", "={{ JSON.stringify($('Contact ids').first().json) }}", HS, "hubspotAppToken")
+gm = "https://gmail.googleapis.com/gmail/v1/users/me/drafts"
+lst = http("List demo drafts", [220, 300], "GET", gm + '?maxResults=500&q=' + 'to:example.com "Tallgrass Advisory"'.replace(" ", "%20").replace('"', "%22"), None, GM, "gmailOAuth2")
+split = code("Split drafts", [440, 300], "return ($json.drafts ?? []).map(d => ({ json: { id: d.id } }));")
+get = http("Draft headers", [660, 300], "GET", "=" + gm + "/{{ $json.id }}?format=metadata&metadataHeaders=To", None, GM, "gmailOAuth2")
+# Gmail's to: search matches substrings, and a draft delete is permanent: keep only drafts whose every recipient is exactly example.com.
+keep = code("Only example.com", [880, 300], """const out = [];
+for (const it of $input.all()) {
+  const to = (it.json.message?.payload?.headers ?? []).find(h => h.name.toLowerCase() === 'to')?.value ?? '';
+  const addrs = to.split(',').map(a => (a.match(/<([^>]+)>/)?.[1] ?? a).trim().toLowerCase()).filter(Boolean);
+  if (addrs.length && addrs.every(a => a.endsWith('@example.com'))) out.push({ json: { id: it.json.id, to } });
+}
+return out;""")
+dele = http("Delete draft", [1100, 300], "DELETE", "=" + gm + "/{{ $json.id }}", None, GM, "gmailOAuth2")
+td = wf("n1DevTeardownHs01", "Dev: teardown (demo contacts, their tasks, example.com drafts)", [manual(), search, ids, assoc, tasks, arch_t, arch_c, lst, split, get, keep, dele])
+td["connections"] = {**chain(["Run once", "Find demo contacts", "Contact ids", "Their tasks", "Task ids", "Archive tasks", "Archive demo contacts"]),
+                     **chain(["List demo drafts", "Split drafts", "Draft headers", "Only example.com", "Delete draft"])}
+td["connections"]["Run once"]["main"][0].append({"node": "List demo drafts", "type": "main", "index": 0})
+json.dump(td, open(root / "workflows/dev-teardown-hubspot.json", "w"), indent=2)
 
 # ---- Sheet: rule tabs and the wider run-log header
 RUNS = ["time", "source", "source_id", "outcome", "time_to_draft_s", "cost_usd", "error", "score", "band", "segment", "demo_owner", "input_tokens", "output_tokens", "draft_id", "thread_id", "draft_check", "task_id", "approval", "approval_at"]

@@ -1,6 +1,6 @@
 {
   "id": "n1DevTeardownHs01",
-  "name": "Dev: teardown (archive every demo_record contact)",
+  "name": "Dev: teardown (demo contacts, their tasks, example.com drafts)",
   "nodes": [
     {
       "parameters": {},
@@ -38,9 +38,9 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: { inputs: ($json.results ?? []).map(c => ({ id: c.id })) } }];"
+        "jsCode": "const inputs = ($json.results ?? []).map(c => ({ id: c.id }));\nreturn inputs.length ? [{ json: { inputs } }] : [];"
       },
-      "name": "Shape archive batch",
+      "name": "Contact ids",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -51,14 +51,14 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.hubapi.com/crm/v3/objects/contacts/batch/archive",
+        "url": "https://api.hubapi.com/crm/v4/associations/contacts/tasks/batch/read",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}"
       },
-      "name": "Archive demo contacts",
+      "name": "Their tasks",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
@@ -71,6 +71,160 @@
           "name": "HubSpot Service Key account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputs = [...new Set(($json.results ?? []).flatMap(r => r.to.map(t => String(t.toObjectId))))].map(id => ({ id }));\nreturn inputs.length ? [{ json: { inputs } }] : [{ json: { inputs: [] } }];"
+      },
+      "name": "Task ids",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/tasks/batch/archive",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Archive tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "u1WBi64R7zas6Zfn",
+          "name": "HubSpot Service Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/batch/archive",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Contact ids').first().json) }}"
+      },
+      "name": "Archive demo contacts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        0
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "u1WBi64R7zas6Zfn",
+          "name": "HubSpot Service Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/drafts?maxResults=500&q=to:example.com%20%22Tallgrass%20Advisory%22",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2"
+      },
+      "name": "List demo drafts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GGGxY4DRdE9giH2x",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return ($json.drafts ?? []).map(d => ({ json: { id: d.id } }));"
+      },
+      "name": "Split drafts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/drafts/{{ $json.id }}?format=metadata&metadataHeaders=To",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2"
+      },
+      "name": "Draft headers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GGGxY4DRdE9giH2x",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\nfor (const it of $input.all()) {\n  const to = (it.json.message?.payload?.headers ?? []).find(h => h.name.toLowerCase() === 'to')?.value ?? '';\n  const addrs = to.split(',').map(a => (a.match(/<([^>]+)>/)?.[1] ?? a).trim().toLowerCase()).filter(Boolean);\n  if (addrs.length && addrs.every(a => a.endsWith('@example.com'))) out.push({ json: { id: it.json.id, to } });\n}\nreturn out;"
+      },
+      "name": "Only example.com",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/drafts/{{ $json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2"
+      },
+      "name": "Delete draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GGGxY4DRdE9giH2x",
+          "name": "Gmail account"
+        }
+      }
     }
   ],
   "connections": {
@@ -81,6 +235,11 @@
             "node": "Find demo contacts",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "List demo drafts",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -89,18 +248,95 @@
       "main": [
         [
           {
-            "node": "Shape archive batch",
+            "node": "Contact ids",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Shape archive batch": {
+    "Contact ids": {
+      "main": [
+        [
+          {
+            "node": "Their tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Their tasks": {
+      "main": [
+        [
+          {
+            "node": "Task ids",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Task ids": {
+      "main": [
+        [
+          {
+            "node": "Archive tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Archive tasks": {
       "main": [
         [
           {
             "node": "Archive demo contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List demo drafts": {
+      "main": [
+        [
+          {
+            "node": "Split drafts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split drafts": {
+      "main": [
+        [
+          {
+            "node": "Draft headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft headers": {
+      "main": [
+        [
+          {
+            "node": "Only example.com",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only example.com": {
+      "main": [
+        [
+          {
+            "node": "Delete draft",
             "type": "main",
             "index": 0
           }
