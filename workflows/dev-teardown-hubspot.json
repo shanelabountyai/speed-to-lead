@@ -177,7 +177,15 @@
         "method": "GET",
         "url": "=https://gmail.googleapis.com/gmail/v1/users/me/drafts/{{ $json.id }}?format=metadata&metadataHeaders=To",
         "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "gmailOAuth2"
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 5,
+              "batchInterval": 1000
+            }
+          }
+        }
       },
       "name": "Draft headers",
       "type": "n8n-nodes-base.httpRequest",
@@ -210,7 +218,15 @@
         "method": "DELETE",
         "url": "=https://gmail.googleapis.com/gmail/v1/users/me/drafts/{{ $json.id }}",
         "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "gmailOAuth2"
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 5,
+              "batchInterval": 1000
+            }
+          }
+        }
       },
       "name": "Delete draft",
       "type": "n8n-nodes-base.httpRequest",

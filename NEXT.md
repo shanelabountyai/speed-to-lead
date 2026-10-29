@@ -18,7 +18,7 @@ Phase 3 built 2026-10-23 (`lib/draft.js`, `test/draft.test.js`; `scripts/build_p
 
 Phase 3 loose ends:
 - DONE 2026-10-29: `hubspot_owner_id` = 95417437 (Shane, the portal's only owner), in `rules/config.json` and the sheet's `config` tab.
-- BUILT 2026-10-29, NOT YET RUN: `dev-teardown-hubspot` now archives the tasks on demo contacts, then the contacts, and deletes Gmail drafts whose every recipient is example.com or *.example.com (Gmail's `to:` search matches substrings and a draft delete is permanent, so a Code node checks the To header). Dry run (destructive nodes stripped): 47 contacts, 29 tasks, 28 of 28 drafts. Run it just before the capstone demo, then re-seed.
+- DONE 2026-10-29: `dev-teardown-hubspot` archives the tasks on demo contacts, then the contacts, and deletes Gmail drafts whose every recipient is example.com or *.example.com (Gmail's `to:` search matches substrings and a draft delete is permanent, so a Code node checks the To header). Run 2026-10-29: 47 contacts, 29 tasks, 28 drafts removed; recheck 0 contacts, 0 drafts. Gmail 429'd after 20 parallel deletes, so draft calls are batched 5/s. The run log still holds rows for the deleted drafts: reset it (`dev-reset-log`) before the next eval run, or approval-check will mark them `discarded`. Run teardown again just before the capstone demo.
 - `approval-check` is imported but not published, like the intakes; publish all three when going to production mode.
 - Still untested from Phase 2: error-handler alerting from a scheduled (production-mode) run.
 

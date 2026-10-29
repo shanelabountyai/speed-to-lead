@@ -58,6 +58,7 @@ for (const it of $input.all()) {
 }
 return out;""")
 dele = http("Delete draft", [1100, 300], "DELETE", "=" + gm + "/{{ $json.id }}", None, GM, "gmailOAuth2")
+for n in (get, dele): n["parameters"]["options"] = {"batching": {"batch": {"batchSize": 5, "batchInterval": 1000}}}  # unthrottled, Gmail returned 429 after 20 deletes
 td = wf("n1DevTeardownHs01", "Dev: teardown (demo contacts, their tasks, example.com drafts)", [manual(), search, ids, assoc, tasks, arch_t, arch_c, lst, split, get, keep, dele])
 td["connections"] = {**chain(["Run once", "Find demo contacts", "Contact ids", "Their tasks", "Task ids", "Archive tasks", "Archive demo contacts"]),
                      **chain(["List demo drafts", "Split drafts", "Draft headers", "Only example.com", "Delete draft"])}
