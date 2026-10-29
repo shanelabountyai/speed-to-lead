@@ -1,6 +1,6 @@
 # Next
 
-**Pick up: Phase 4, the eval gate, setup doc and capstone demo.** First close the Phase 3 loose ends below (shortest first). n8n is stopped; start it with the command below. Google OAuth in Testing mode lapses every 7 days (last reconnected 2026-10-16, still worked 2026-10-23): reconnect if a node says so.
+**Pick up: Phase 4, the eval gate, setup doc and capstone demo.** First close the Phase 3 loose ends below (shortest first). n8n is stopped; start it with the command below. Google OAuth in Testing mode lapses every 7 days (last reconnected 2026-10-29; n8n's UI says "connected" even when the token is dead, so test with a CLI run): reconnect if a node says so.
 
 Status (2026-10-23): Phases 1 to 3 built and verified live. 40/40 fixtures and 15/15 held-out on outcome, score, band, segment and owner; 26 drafts and 26 tasks created, replay creates none; $0.049 per 40 leads including drafts.
 
@@ -17,8 +17,8 @@ Phase 3 built 2026-10-23 (`lib/draft.js`, `test/draft.test.js`; `scripts/build_p
 - BUG FOUND AND FIXED (Phase 2 code): two messages from one sender in one batch made HubSpot reject the WHOLE batch upsert ('Duplicate IDs'), nothing was logged, and every poll re-failed: the Gmail intake stalled forever. `upsertInputs` now merges them (later message wins). Found by the live seed after a log reset made earlier seed emails eligible again; an outage backlog would trigger it in production.
 
 Phase 3 loose ends:
-- `hubspot_owner_id` in the config tab is blank, so tasks are unassigned. Fill it with Shane's HubSpot owner id (the PRD says the owner on every record is Shane).
-- No teardown for drafts and tasks: about 30 demo drafts sit in shanelabountyai@gmail.com's Drafts and 30 tasks in HubSpot (`dev-teardown-hubspot` archives contacts only). Build one before the capstone demo.
+- DONE 2026-10-29: `hubspot_owner_id` = 95417437 (Shane, the portal's only owner), in `rules/config.json` and the sheet's `config` tab.
+- BUILT 2026-10-29, NOT YET RUN: `dev-teardown-hubspot` now archives the tasks on demo contacts, then the contacts, and deletes Gmail drafts whose every recipient is example.com or *.example.com (Gmail's `to:` search matches substrings and a draft delete is permanent, so a Code node checks the To header). Dry run (destructive nodes stripped): 47 contacts, 29 tasks, 28 of 28 drafts. Run it just before the capstone demo, then re-seed.
 - `approval-check` is imported but not published, like the intakes; publish all three when going to production mode.
 - Still untested from Phase 2: error-handler alerting from a scheduled (production-mode) run.
 
@@ -33,6 +33,8 @@ Phase 1 setup done 2026-10-05:
 - `npx n8n@2.27.5` FAILS on Node 26 (`isolated-vm` native build; n8n needs Node >=22.22 and <26). Run it under a local Node 22 instead: n8n is installed in `~/.n8n-runtime` (`node@22` + `n8n@2.27.5`). Start: `PATH=$HOME/.n8n-runtime/node_modules/.bin:$PATH N8N_USER_FOLDER=$HOME/.n8n-speed-to-lead n8n start`, editor at http://localhost:5678.
 - Confirmed in 2.27.5: Gmail Trigger (labelIds filter), HubSpot + HubSpot Trigger, Google Sheets, Anthropic nodes all present.
 - `~/.n8n` was last used by n8n 2.41.5, so launching 2.27.5 recorded a downgrade. It held 0 workflows. Backup: `~/.n8n-backup-2026-10-05`. Decided 2026-10-05: this project uses its own data folder `~/.n8n-speed-to-lead` (fresh, 2.27.5 only); `~/.n8n` is left untouched.
+
+- n8n owner login was reset 2026-10-27 (`n8n user-management:reset`; password unknown). New password is in Shane's password manager. DB backup: `~/.n8n-speed-to-lead/database.sqlite.bak-2026-10-27`.
 
 Wired 2026-10-05 (ids, no secrets): run-log sheet `Speed-to-Lead Run Log`, id `1tf-R3Nx1leSg4i4rBwCq8XzItWzUk-qID06-js_AOcY` (tabs `runs`, `review`). n8n data is in `~/.n8n-speed-to-lead/.n8n/`. Credentials: Gmail `GGGxY4DRdE9giH2x`, Sheets `McOy4auCNkFX0Os2`; HubSpot `u1WBi64R7zas6Zfn`. n8n's Gmail account is shanelabountyai@gmail.com (label `n1-lead` made by hand there, 1,165-message inbox). The Gmail connector Claude sees is a DIFFERENT mailbox (10.8k messages), where Claude created a stray `n1-lead` label (Label_2): delete it.
 

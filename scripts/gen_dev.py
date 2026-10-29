@@ -49,12 +49,12 @@ gm = "https://gmail.googleapis.com/gmail/v1/users/me/drafts"
 lst = http("List demo drafts", [220, 300], "GET", gm + '?maxResults=500&q=' + 'to:example.com "Tallgrass Advisory"'.replace(" ", "%20").replace('"', "%22"), None, GM, "gmailOAuth2")
 split = code("Split drafts", [440, 300], "return ($json.drafts ?? []).map(d => ({ json: { id: d.id } }));")
 get = http("Draft headers", [660, 300], "GET", "=" + gm + "/{{ $json.id }}?format=metadata&metadataHeaders=To", None, GM, "gmailOAuth2")
-# Gmail's to: search matches substrings, and a draft delete is permanent: keep only drafts whose every recipient is exactly example.com.
+# Gmail's to: search matches substrings, and a draft delete is permanent: keep only drafts whose every recipient is example.com or *.example.com (reserved, as lead.js demoAllowed).
 keep = code("Only example.com", [880, 300], """const out = [];
 for (const it of $input.all()) {
   const to = (it.json.message?.payload?.headers ?? []).find(h => h.name.toLowerCase() === 'to')?.value ?? '';
   const addrs = to.split(',').map(a => (a.match(/<([^>]+)>/)?.[1] ?? a).trim().toLowerCase()).filter(Boolean);
-  if (addrs.length && addrs.every(a => a.endsWith('@example.com'))) out.push({ json: { id: it.json.id, to } });
+  if (addrs.length && addrs.every(a => /@([a-z0-9-]+\\.)*example\\.com$/.test(a))) out.push({ json: { id: it.json.id, to } });
 }
 return out;""")
 dele = http("Delete draft", [1100, 300], "DELETE", "=" + gm + "/{{ $json.id }}", None, GM, "gmailOAuth2")

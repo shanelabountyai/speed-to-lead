@@ -195,7 +195,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const out = [];\nfor (const it of $input.all()) {\n  const to = (it.json.message?.payload?.headers ?? []).find(h => h.name.toLowerCase() === 'to')?.value ?? '';\n  const addrs = to.split(',').map(a => (a.match(/<([^>]+)>/)?.[1] ?? a).trim().toLowerCase()).filter(Boolean);\n  if (addrs.length && addrs.every(a => a.endsWith('@example.com'))) out.push({ json: { id: it.json.id, to } });\n}\nreturn out;"
+        "jsCode": "const out = [];\nfor (const it of $input.all()) {\n  const to = (it.json.message?.payload?.headers ?? []).find(h => h.name.toLowerCase() === 'to')?.value ?? '';\n  const addrs = to.split(',').map(a => (a.match(/<([^>]+)>/)?.[1] ?? a).trim().toLowerCase()).filter(Boolean);\n  if (addrs.length && addrs.every(a => /@([a-z0-9-]+\\.)*example\\.com$/.test(a))) out.push({ json: { id: it.json.id, to } });\n}\nreturn out;"
       },
       "name": "Only example.com",
       "type": "n8n-nodes-base.code",
