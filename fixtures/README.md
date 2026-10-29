@@ -24,6 +24,8 @@ Expected outcomes: 9 hot drafts, 10 warm drafts, 6 contacts with no draft, 10 no
 
 ## How to score a run
 
+`scripts/eval.sh` does all of this from one command (n8n stopped) and exits 1 below any threshold. It runs this set and `holdout.json`, and both must pass. Labels hold only what the message states: a name or company the model could only get from the email address is `null` or a first name.
+
 - Extraction: compare each returned field to `labels`. Target 90% of fields correct, and zero non-null values where the label is `null`.
 - Lead detection: `is_lead` matches. Target 95%, and every miss must land in review, not in a draft.
 - Score, band, segment, owner, outcome: exact match to `expected`. These are rules, so the target is 100%.

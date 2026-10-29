@@ -1,5 +1,5 @@
 """Writes workflows/dev-eval-run.json: every fixture, in order, through process-lead (no live inbox needed).
-Usage: python3 scripts/gen_eval_run.py [n1-fixtures|holdout]; then n8n execute --id=<id> > out.txt; python3 scripts/compare_run.py out.txt [fixtureset]."""
+Usage: python3 scripts/gen_eval_run.py [n1-fixtures|holdout]. scripts/eval.sh runs this, imports, executes and scores both sets."""
 import json, pathlib, sys
 root = pathlib.Path(__file__).resolve().parent.parent
 name = sys.argv[1] if len(sys.argv) > 1 else "n1-fixtures"   # or "holdout"

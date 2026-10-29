@@ -190,6 +190,10 @@ return $('Decide').all().map((i) => i.json).map((d) => {
     draft_id: x?.draft_id ?? '', thread_id: x?.thread_id ?? '', draft_check: x?.draft_check ?? '', task_id: x?.task_id ?? '', approval: x?.draft_id ? 'pending' : '', approval_at: '' } };
 });""", once=True))
 nodes.append(node("Write run log", "n8n-nodes-base.executeWorkflow", 1.2, [3740, 120], {"source": "database", "workflowId": {"__rl": True, "value": WRITER_ID, "mode": "id"}, "options": {}}))
+# Runs last, so it is what a caller receives: the log row plus the extraction, which the eval gate scores (the sheet never stores it).
+nodes.append(code("Result", [3960, 120], """
+const dec = Object.fromEntries($('Decide').all().map((i) => [i.json.source_id, i.json]));
+return $('Log rows').all().map((i) => ({ json: { ...i.json, ex: dec[i.json.source_id]?.ex ?? null } }));""", once=True))
 c = {}
 for a, b in [("When called", "Load tables"), ("Load tables", "Prep"), ("Prep", "Allowed?")]: link(c, a, b)
 link(c, "Allowed?", "Extract", 0); link(c, "Allowed?", "Mark skipped", 1)
@@ -205,7 +209,7 @@ link(c, "Upsert contacts", "Verify upsert"); link(c, "Verify upsert", "Draft pre
 link(c, "Any drafts?", "Split drafts", 0); link(c, "Any drafts?", "Contacts done", 1)
 for a, b in [("Split drafts", "Write ack"), ("Write ack", "Build draft"), ("Build draft", "Create draft"), ("Create draft", "Build tasks"), ("Build tasks", "Create tasks"), ("Create tasks", "Draft results"), ("Draft results", "Contacts done")]: link(c, a, b)
 link(c, "Contacts done", "Review rows"); link(c, "Contacts done", "Log rows")
-link(c, "Review rows", "Write review"); link(c, "Log rows", "Write run log")
+link(c, "Review rows", "Write review"); link(c, "Log rows", "Write run log"); link(c, "Write run log", "Result")
 json.dump(wf(PROCESS_ID, "N1 process lead (phase 2)", nodes, c, {"errorWorkflow": "n1ErrorHandler01"}), open(root / "workflows/process-lead.json", "w"), indent=2)
 
 # ---------------- intakes call process-lead instead of the stub
