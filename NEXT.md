@@ -1,6 +1,6 @@
 # Next
 
-**Pick up: Phase 4 continued: the setup doc (P0-12), then the capstone demo.** The eval gate is built and green (below). Still open from Phase 3: publish approval-check and the intakes for production mode, and test error-handler alerting from a scheduled run (this fits the capstone, which runs the server).
+**Pick up: the capstone demo (3 leads live, then read the log), then closure deliverables.** Setup doc written 2026-10-30 at `docs/SETUP.md`, NOT yet followed on a fresh n8n (the id-remap step in section 3 is untested). The eval gate is built and green (below). Still open from Phase 3: publish approval-check and the intakes for production mode, and test error-handler alerting from a scheduled run (this fits the capstone, which runs the server).
 
 Phase 4 eval gate built 2026-10-29:
 - One command: `scripts/eval.sh` (n8n stopped). It runs unit tests (incl. the planted-fabrication gate), regenerates and imports process-lead and the eval workflows, tears down the last run's demo records, then for each set (40 tuned, 15 held-out) resets the log, runs every message through process-lead, and scores it with `scripts/eval_gate.py`. Exits 1 on any threshold miss. Full output in `eval-out/` (gitignored). Replaces `compare_run.py`.
