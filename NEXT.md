@@ -1,6 +1,11 @@
 # Next
 
-**Pick up: the capstone demo (3 leads live, then read the log), then closure deliverables.** Setup doc written 2026-10-30 at `docs/SETUP.md`, NOT yet followed on a fresh n8n (the id-remap step in section 3 is untested). The eval gate is built and green (below). Still open from Phase 3: publish approval-check and the intakes for production mode, and test error-handler alerting from a scheduled run (this fits the capstone, which runs the server).
+**Pick up: closure deliverables (DEMO.md, exec-brief, LinkedIn posts, cost review).** Capstone ran live 2026-10-30; n8n is stopped and the three schedules are still published (unpublish or leave: they only fire while n8n runs).
+
+Capstone result 2026-10-30 (production mode, all three schedules published, no errors in the run): H01 email drafted in 37 s (score 100, hot, task + draft, approval pending); H09 email scored 75 hot, no draft, review row (as designed); Pete Dalton (HubSpot, H05) drafted in 86 s (warm 65). Run log read with `workflows/dev-read-log.json` (`n1DevReadLog00001`, CLI, n8n stopped).
+Found: the Gmail intake also re-processed the `n1-lead` mail from earlier seed runs (draft time ~7 days, arrival-based), because teardown removes drafts but leaves labelled mail; and 5 older HubSpot contacts hit `skipped_demo_guard` (not example.com). Harmless, but a clean demo needs: teardown, reset log, and unlabel old `n1-lead` mail first. Run log now holds 14 rows and live drafts/tasks: run `dev-teardown-hubspot` + `dev-reset-log` before the next eval.
+Still NOT verified: `sent` approval path live, error-handler alert from a scheduled run, SETUP.md on a truly fresh n8n.
+
 
 Phase 4 eval gate built 2026-10-29:
 - One command: `scripts/eval.sh` (n8n stopped). It runs unit tests (incl. the planted-fabrication gate), regenerates and imports process-lead and the eval workflows, tears down the last run's demo records, then for each set (40 tuned, 15 held-out) resets the log, runs every message through process-lead, and scores it with `scripts/eval_gate.py`. Exits 1 on any threshold miss. Full output in `eval-out/` (gitignored). Replaces `compare_run.py`.

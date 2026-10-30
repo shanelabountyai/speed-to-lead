@@ -1,0 +1,67 @@
+{
+  "id": "n1DevReadLog00001",
+  "name": "Dev: read run log",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Run once",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1tf-R3Nx1leSg4i4rBwCq8XzItWzUk-qID06-js_AOcY",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "runs",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "name": "Read runs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "McOy4auCNkFX0Os2",
+          "name": "Google Sheets account"
+        }
+      },
+      "alwaysOutputData": true,
+      "retryOnFail": false,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "connections": {
+    "Run once": {
+      "main": [
+        [
+          {
+            "node": "Read runs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
