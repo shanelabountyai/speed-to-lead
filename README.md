@@ -4,6 +4,7 @@ First workflow in the n8n Automation track. A new lead becomes a scored, routed 
 
 - PRD: https://claude.ai/artifact/FAz82XgxDT9xWHw2DG6F75
 - Build log: https://claude.ai/artifact/28KeGV3xfBwcBuoMEQjFMj
+- Exec brief: https://claude.ai/artifact/XDzQBfEgEyNpKYXuFmTuQv
 - Demo firm: Tallgrass Advisory (fictional). Demo data only; nothing here runs on real contacts.
 - Stack: n8n (self-hosted), HubSpot, Gmail, Claude. QuickBooks is out of scope.
 

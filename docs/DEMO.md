@@ -104,6 +104,6 @@ n8n execute --id=n1DevTeardownHs01 && n8n execute --id=n1ResetLog00001
 - **Scheduled error alerting** is verified with a forced-failure workflow, not yet from a production-mode intake failing for real.
 - **The setup doc** (`docs/SETUP.md`) has not been followed on a fresh machine; the id-remap step is untested.
 - **Google OAuth is in Testing mode**, so it needs reconnecting weekly until the app is published.
-- **The word-list checker is a net, not a proof.** It catches the 15 planted fabrication kinds and passes the held-out drafts, but a novel phrasing could slip through. That is why a person approves every draft.
+- **The word-list checker is a net, not a proof.** It catches all 16 planted fabrications and passes the held-out drafts, but a novel phrasing could slip through. That is why a person approves every draft.
 - **The eval labels were corrected while the gate was built** (names the model could not see). The held-out set is the number that was not tuned.
 - **Runs on a laptop** under n8n 2.27.5 on Node 22. Not deployed.
